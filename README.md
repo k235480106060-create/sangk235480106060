@@ -121,6 +121,18 @@ Quy trình sinh cặp khóa công khai $(e, n)$ và khóa bí mật $(d, n)$:
   
 ### c. Giải pháp kết hợp sức mạnh của RSA và AES (Mã hóa lai - Hybrid Encryption)
 
+```text
+[Dữ liệu lớn] -----( Mã hóa bằng AES )-----> [Ciphertext]
+                          ^
+                          |
+                   [Khóa Session AES]
+                          |
+                   ( Mã hóa bằng RSA )
+                          |
+                          v
+                 [Khóa Session đã mã hóa]
+```
+
 Vì **AES mã hóa cực nhanh** nhưng gặp khó khăn khi chia sẻ khóa bí mật, còn **RSA truyền khóa an toàn** nhưng tốc độ quá chậm, mô hình **Mã hóa lai (Hybrid Encryption)** ra đời để kết hợp ưu điểm của cả hai:
 
 1. **Quy trình gửi dữ liệu:**
