@@ -48,52 +48,88 @@
 ### c. Demo cài đặt AES bằng Python
 Code triển khai thuật toán **AES-256 (chế độ CBC)** sử dụng thư viện `cryptography`:
 > **Lưu ý cài thư viện:** `pip install cryptography`
-```python
-import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.backends import default_backend
 
-def pad(data: bytes) -> bytes:
-"""Đệm dữ liệu chuẩn PKCS7 cho vừa đủ bội số 16 bytes (128 bits)."""
-padder = padding.PKCS7(128).padder()
-return padder.update(data) + padder.finalize()
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/1c541e12-16dc-45a9-aaae-9b46817a8622" />
 
-def unpad(padded_data: bytes) -> bytes:
-"""Gỡ đệm PKCS7 sau khi giải mã."""
-unpadder = padding.PKCS7(128).unpadder()
-return unpadder.update(padded_data) + unpadder.finalize()
+### Kết quả thực thi chương trình AES-256 (`aes_demo.py`)
 
-def aes_encrypt(plain_text: str, secret_key: bytes):
-"""Mã hóa văn bản bằng AES-256-CBC."""
-# Tạo ngẫu nhiên Vector khởi tạo IV (16 bytes)
-iv = os.urandom(16)
-cipher = Cipher(algorithms.AES(secret_key), modes.CBC(iv), backend=default_backend())
-encryptor = cipher.encryptor()
-padded_bytes = pad(plain_text.encode('utf-8'))
-cipher_text = encryptor.update(padded_bytes) + encryptor.finalize()
-return iv, cipher_text
+Sau khi khởi chạy file `aes_demo.py`, chương trình đã thực hiện thành công chu trình mã hóa và giải mã dữ liệu với kết quả đầu ra như sau:
 
-def aes_decrypt(cipher_text: bytes, secret_key: bytes, iv: bytes) -> str:
-"""Giải mã văn bản bằng AES-256-CBC."""
-cipher = Cipher(algorithms.AES(secret_key), modes.CBC(iv), backend=default_backend())
-decryptor = cipher.decryptor()
+#### 1. Dữ liệu đầu vào:
+- **Thông điệp ban đầu (Plaintext):** `Bai tap thuc hanh An toan va Bao mat thong tin`
 
-padded_plain = decryptor.update(cipher_text) + decryptor.finalize()
-plain_bytes = unpad(padded_plain)
-return plain_bytes.decode('utf-8')
+#### 2. Kết quả Mã hóa (Encryption):
+- **Dữ liệu mã hóa (Ciphertext - dạng Hex):**
+`b21ea1a38e2663e35b452299c69dd97aad1a5c92ed96b527d81764f04e58f9f6a49d2c96b9634a1a89677447e184512f`
+- **Vector khởi tạo IV (Initialization Vector - dạng Hex):**
+`3e3928569989768a41a287e97fd07794`
 
-# Running Test
-if __name__ == "__main__":
-key_256 = os.urandom(32)  # Khóa 256-bit
-raw_text = "Thử nghiệm mã hóa dữ liệu với AES-256 CBC Mode"
+#### 3. Kết quả Giải mã (Decryption):
+- **Dữ liệu sau khi giải mã (Decrypted Text):** `Bai tap thuc hanh An toan va Bao mat thong tin`
 
-print("Văn bản gốc:", raw_text)
+#### 4. Đánh giá kết quả:
+- Dữ liệu sau khi giải mã trùng khớp hoàn toàn 100% với thông điệp ban đầu.
+- Chuỗi ciphertext thu được hoàn toàn là ký tự hex ngẫu nhiên, đảm bảo tính bảo mật khi truyền qua môi trường mạng không an toàn.
+- Mã thoát chương trình: `Process finished with exit code 0` (Thực thi thành công, không phát sinh lỗi).
 
-# Mã hóa
-iv, encrypted_data = aes_encrypt(raw_text, key_256)
-print("Dữ liệu sau mã hóa (Hex):", encrypted_data.hex())
 
-# Giải mã
-decrypted_text = aes_decrypt(encrypted_data, key_256, iv)
-print("Dữ liệu sau giải mã:", decrypted_text)
+## 2. Tìm hiểu thuật toán mã hóa bất đối xứng RSA
+
+### a. Giới thiệu thuật toán RSA
+RSA (Rivest–Shamir–Adleman) là thuật toán mã hóa bất đối xứng phổ biến nhất hiện nay, dựa trên độ khó của bài toán phân tích một số nguyên lớn thành tích của các số nguyên tố.
+
+### b. Nguyên lý sinh cặp khóa (Key Generation)
+Quy trình sinh cặp khóa công khai $(e, n)$ và khóa bí mật $(d, n)$:
+1. **Chọn 2 số nguyên tố lớn:** $p$ và $q$ ($p \neq q$).
+2. **Tính tích:** $n = p \times q$ (Độ dài $n$ chính là độ dài khóa, ví dụ 2048-bit).
+3. **Tính hàm số Euler:** $\phi(n) = (p - 1) \times (q - 1)$.
+4. **Chọn số $e$ (Khóa công khai):** Chọn $e$ sao cho $1 < e < \phi(n)$ và $gcd(e, \phi(n)) = 1$ (thường chọn $e = 65537$).
+5. **Tính số $d$ (Khóa bí mật):** Tìm $d$ sao cho $(d \times e) \equiv 1 \pmod{\phi(n)}$ (tức $d$ là nghịch đảo nhân modular của $e$).
+
+- **Public Key (Khóa công khai):** $(e, n)$ — Dùng để mã hóa hoặc kiểm tra chữ ký.
+- **Private Key (Khóa bí mật):** $(d, n)$ — Dùng để giải mã hoặc tạo chữ ký.
+
+---
+
+## 3. Các mô hình áp dụng RSA, So sánh và Kết hợp RSA với AES
+### a. Các mô hình ứng dụng RSA
+1. **Mô hình Xác thực người nhận (Bảo mật dữ liệu):**
+- **Người gửi:** Dùng **Khóa công khai của người nhận** để mã hóa thông điệp.
+- **Người nhận:** Dùng **Khóa bí mật của chính mình** để giải mã.
+- *Mục đích:* Chỉ duy nhất người nhận sở hữu khóa bí mật mới đọc được nội dung.
+
+2. **Mô hình Xác thực người gửi (Chữ ký số - Digital Signature):**
+- **Người gửi:** Dùng **Khóa bí mật của chính mình** để ký (mã hóa) vào bản băm của thông điệp.
+- **Người nhận:** Dùng **Khóa công khai của người gửi** để xác thực chữ ký.
+- *Mục đích:* Đảm bảo tính chống chối bỏ và xác nhận đúng danh tính người gửi.
+
+3. **Mô hình Xác thực cả hai (Mã hóa + Chữ ký số):**
+- **Người gửi:** Lấy thông điệp $\rightarrow$ Ký bằng **Khóa bí mật người gửi** $\rightarrow$ Mã hóa tiếp bằng **Khóa công khai người nhận**.
+- **Người nhận:** Giải mã bằng **Khóa bí mật người nhận** $\rightarrow$ Kiểm tra chữ ký bằng **Khóa công khai người gửi**.
+- *Mục đích:* Đảm bảo vừa bảo mật nội dung vừa xác thực danh tính 2 chiều.
+
+### b. So sánh thời gian và tốc độ giữa RSA và AES
+
+| Tiêu chí | AES (Mã hóa đối xứng) | RSA (Mã hóa bất đối xứng) |
+| :--- | :--- | :--- |
+| **Kích thước khóa** | 128, 192, 256 bits | 2048, 3072, 4096 bits |
+| **Tốc độ mã hóa/giải mã** | Cực nhanh (hàng nghìn đến hàng triệu phép tính/giây) | Rất chậm (chậm hơn AES từ 1000 đến 10.000 lần) |
+| **Tài nguyên tính toán** | Thấp, tối ưu tốt trên phần cứng | Cao, đòi hỏi tính toán số nguyên lớn |
+| **Khả năng xử lý dữ liệu** | Mã hóa khối dữ liệu dung lượng lớn bất kỳ | Chỉ mã hóa được dữ liệu ngắn (nhỏ hơn kích thước khóa) |
+| **Quản lý khóa** | Khó khăn trong việc phân phối khóa an toàn | Dễ dàng chia sẻ khóa công khai |
+
+  
+### c. Giải pháp kết hợp sức mạnh của RSA và AES (Mã hóa lai - Hybrid Encryption)
+
+Vì **AES mã hóa cực nhanh** nhưng gặp khó khăn khi chia sẻ khóa bí mật, còn **RSA truyền khóa an toàn** nhưng tốc độ quá chậm, mô hình **Mã hóa lai (Hybrid Encryption)** ra đời để kết hợp ưu điểm của cả hai:
+
+1. **Quy trình gửi dữ liệu:**
+- Tạo ra một **Khóa phiên ngẫu nhiên (Session Key)** dùng thuật toán AES.
+- Sử dụng **AES + Khóa phiên** để mã hóa toàn bộ dữ liệu dung lượng lớn (Nhanh chóng).
+- Sử dụng **RSA + Khóa công khai của người nhận** để mã hóa chính **Khóa phiên AES** này (An toàn).
+- Gửi cả *Dữ liệu đã mã hóa AES* và *Khóa phiên đã mã hóa RSA* cho người nhận.
+
+2. **Quy trình nhận dữ liệu:**
+- Người nhận dùng **Khóa bí mật RSA** của mình để giải mã lấy lại **Khóa phiên AES**.
+- Dùng **Khóa phiên AES** vừa lấy được để giải mã toàn bộ dữ liệu gốc.
+> **Ứng dụng thực tế:** Đây chính là cơ chế đang được sử dụng trong các giao thức bảo mật hàng ngày như **HTTPS (TLS/SSL)**, **SSH**, và **PGP Email**.
